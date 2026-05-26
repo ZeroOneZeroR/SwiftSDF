@@ -95,13 +95,6 @@ Clients only ever `import SwiftSDF`. The lower two layers are private implementa
 | iOS      | 14.0           |
 | macOS    | 11.0           |
 
-| Tool  | Version |
-|-------|---------|
-| Swift | 6.2+    |
-| Xcode | 16+     |
-
-**C++ Standard:** C++17
-
 ---
 
 ## Installation
