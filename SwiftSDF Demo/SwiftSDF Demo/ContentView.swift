@@ -12,7 +12,7 @@ struct ContentView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            Text("SwiftSDF Metal Rendering")
+            Text("Text rendered with MSDF on metal:")
                 .font(.headline)
             
             if let path = cgPath {
@@ -31,7 +31,7 @@ struct ContentView: View {
         .padding()
         .onAppear {
             let testCharacter: Character = "H"
-            let largeFont = UIFont.systemFont(ofSize: 100, weight: .bold)
+            let largeFont = UIFont.systemFont(ofSize: 20, weight: .bold)
             
             DispatchQueue.global(qos: .userInitiated).async {
                 let path = GlyphUtils.createPath(for: testCharacter, font: largeFont)

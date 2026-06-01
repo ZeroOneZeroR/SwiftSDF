@@ -73,15 +73,15 @@ struct SDFMetalView: UIViewRepresentable {
         }
         
         private func generateTexture(device: MTLDevice, path: CGPath) {
-            let width = 256
-            let height = 256
+            let width = 100
+            let height = 100
             
             // Configure SwiftSDF
             let config = SDFConfiguration(
                 outputWidth: width,
                 outputHeight: height,
                 padding: 16.0,
-                range: 16.0,
+                range: 32.0,
                 precision: .float16,
                 flipY: true // Metal's texture coordinate system expects this
             )

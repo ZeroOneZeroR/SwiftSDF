@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2172EC222FC5CE8F001D42E5 /* SwiftSDF in Frameworks */ = {isa = PBXBuildFile; productRef = 2172EC212FC5CE8F001D42E5 /* SwiftSDF */; };
+		21FE79592FCDEE71008C88AD /* SwiftSDF in Frameworks */ = {isa = PBXBuildFile; productRef = 21FE79582FCDEE71008C88AD /* SwiftSDF */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2172EC222FC5CE8F001D42E5 /* SwiftSDF in Frameworks */,
+				21FE79592FCDEE71008C88AD /* SwiftSDF in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,7 +70,7 @@
 			);
 			name = "SwiftSDF Demo";
 			packageProductDependencies = (
-				2172EC212FC5CE8F001D42E5 /* SwiftSDF */,
+				21FE79582FCDEE71008C88AD /* SwiftSDF */,
 			);
 			productName = "SwiftSDF Demo";
 			productReference = 2172EC122FC5CE1E001D42E5 /* SwiftSDF Demo.app */;
@@ -101,7 +101,7 @@
 			mainGroup = 2172EC092FC5CE1E001D42E5;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				2172EC202FC5CE8F001D42E5 /* XCLocalSwiftPackageReference "../../SwiftSDF" */,
+				21FE79572FCDEE71008C88AD /* XCLocalSwiftPackageReference "../../SwiftSDF" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2172EC132FC5CE1E001D42E5 /* Products */;
@@ -343,14 +343,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		2172EC202FC5CE8F001D42E5 /* XCLocalSwiftPackageReference "../../SwiftSDF" */ = {
+		21FE79572FCDEE71008C88AD /* XCLocalSwiftPackageReference "../../SwiftSDF" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../../SwiftSDF;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		2172EC212FC5CE8F001D42E5 /* SwiftSDF */ = {
+		21FE79582FCDEE71008C88AD /* SwiftSDF */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SwiftSDF;
 		};

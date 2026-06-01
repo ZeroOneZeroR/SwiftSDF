@@ -2,7 +2,26 @@
 
 **A Swift package for high-quality Signed Distance Field (SDF) and Multi-channel Signed Distance Field (MSDF/MTSDF) generation from `CGPath` on Apple platforms.**
 
-Built on top of [msdfgen](https://github.com/Chlumsky/msdfgen) and [Skia PathOps](https://skia.org/docs/dev/present/pathops/), SwiftSDF provides a clean, idiomatic Swift/Objective-C API that takes any `CGPath` and produces a packed, Metal-ready texture buffer.
+Built on top of [msdfgen](https://github.com/Chlumsky/msdfgen) and [Skia PathOps](https://skia.org/docs/dev/present/pathops/), SwiftSDF provides a clean, idiomatic Swift API that takes any `CGPath` and produces a packed, Metal-ready texture buffer.
+
+---
+
+## Platform Support
+
+![iOS](https://img.shields.io/badge/iOS-12.0%2B-blue?logo=apple)
+![macOS](https://img.shields.io/badge/macOS-11.0%2B-blue?logo=apple)
+![tvOS](https://img.shields.io/badge/tvOS-12.0%2B-blue?logo=apple)
+![watchOS](https://img.shields.io/badge/watchOS-4.0%2B-blue?logo=apple)
+![visionOS](https://img.shields.io/badge/visionOS-1.0%2B-blue?logo=apple)
+![Swift](https://img.shields.io/badge/Swift-5.9%2B-orange?logo=swift)
+![SPM](https://img.shields.io/badge/Swift_Package_Manager-compatible-brightgreen)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
+
+---
+
+## Demo
+
+<img src="demo_app_screenshot.png" width="300" alt="SwiftSDF Demo — MSDF glyph rendered via Metal" />
 
 ---
 
@@ -19,7 +38,7 @@ Built on top of [msdfgen](https://github.com/Chlumsky/msdfgen) and [Skia PathOps
   - [SDFResult](#sdfresult)
   - [SDFGenerator](#sdfgenerator)
   - [Metal Integration](#metal-integration)
-- [SDF vs MSDF — When to Use What](#sdf-vs-msdf--when-to-use-what)
+- [SDF vs MSDF](#sdf-vs-msdf)
 - [Path Simplification with Skia PathOps](#path-simplification-with-skia-pathops)
 - [Metal Rendering (Demo)](#metal-rendering-demo)
 - [Performance](#performance)
@@ -51,8 +70,6 @@ The library focuses entirely on **generation**. It has no Metal dependency, no r
 - ✅ **Configurable padding and pixel range** — fine-grained control over the SDF margin
 - ✅ **Y-axis flip control** — matches Metal's top-left texture origin out of the box
 - ✅ **Clean three-layer Swift Package** — C++ core, ObjC++ bridge, public Swift API
-- ✅ **iOS 14+ and macOS 11+**
-- ✅ **No rendering code** — bring your own Metal pipeline
 - ✅ **Stroke and shadow for free** — pure shader-side, zero extra generation cost
 
 ---
@@ -90,10 +107,14 @@ Clients only ever `import SwiftSDF`. The lower two layers are private implementa
 
 ## Requirements
 
-| Platform | Minimum Version |
-|----------|----------------|
-| iOS      | 14.0           |
-| macOS    | 11.0           |
+| Platform  | Minimum Version |
+|-----------|----------------|
+| iOS       | 12.0           |
+| macOS     | 11.0           |
+| tvOS      | 12.0           |
+| watchOS   | 4.0            |
+| visionOS  | 1.0            |
+| Swift     | 5.9            |
 
 ---
 
@@ -250,7 +271,7 @@ let result = SDFGenerator.generate(from: path, requestMode: .msdf, config: confi
 | `.msdf` | Always generates a 4-channel MTSDF (`SDFChannelFormat.rgba`) |
 | `.auto` | The C++ core decides based on path complexity |
 
-> **Note on MSDF:** SwiftSDF generates **MTSDF** (Multi-channel True Signed Distance Field) for all MSDF requests. This is a 4-channel variant that stores three independent distance channels plus an alpha, improving robustness for complex paths with sharp corners over standard 3-channel MSDF.
+> **Note on MSDF:** SwiftSDF generates **MTSDF** (Multi-channel True Signed Distance Field) for all MSDF requests. This is a 4-channel variant that stores three independent distance channels plus a true SDF(as alpha).
 
 #### Error Codes
 
@@ -271,29 +292,20 @@ The `SwiftSDF` layer extends `SDFConfiguration` with a Metal convenience helper:
 let pixelFormat: MTLPixelFormat = config.metalPixelFormat(channelFormat: result.channelFormat)
 ```
 
-| Channel Format | Precision | `MTLPixelFormat` |
-|----------------|-----------|------------------|
-| `.r`           | `.unorm8`  | `.r8Unorm`       |
-| `.r`           | `.float16` | `.r16Float`      |
-| `.rgba`        | `.unorm8`  | `.rgba8Unorm`    |
-| `.rgba`        | `.float16` | `.rgba16Float`   |
+| Channel Format | Precision  | `MTLPixelFormat`  |
+|----------------|------------|-------------------|
+| `.r`           | `.unorm8`  | `.r8Unorm`        |
+| `.r`           | `.float16` | `.r16Float`       |
+| `.rgba`        | `.unorm8`  | `.rgba8Unorm`     |
+| `.rgba`        | `.float16` | `.rgba16Float`    |
 
 ---
 
-## SDF vs MSDF — When to Use What
-
-| Scenario | Recommended Mode |
-|----------|-----------------|
-| Simple icons, circular shapes, blobs | `.sdf` |
-| Text glyphs at any size | `.msdf` |
-| Vector art with sharp corners | `.msdf` |
-| Tight memory budget, soft shapes only | `.sdf` + `.unorm8` |
-| High-fidelity text at large scale | `.msdf` + `.float16` |
-| Unknown path complexity | `.auto` |
+## SDF vs MSDF
 
 **SDF** encodes the shortest distance to the shape boundary in a single channel. It scales well but softens sharp corners.
 
-**MSDF (MTSDF)** encodes three independent distance channels across RGB, using them together in the fragment shader to reconstruct true sharp corners at any scale. The fourth channel (alpha) stores a conventional SDF for fallback and masking purposes. The standard median-of-three reconstruction in the fragment shader is:
+**MSDF (MTSDF)** encodes three independent distance channels across RGB, using them together in the fragment shader to reconstruct true sharp corners at any scale. The fourth channel (alpha) stores a conventional SDF for fallback and stroke, shadow & other masking purposes. The standard median-of-three reconstruction in the fragment shader is:
 
 ```metal
 float median(float r, float g, float b) {
@@ -310,7 +322,7 @@ float alpha   = clamp(sigDist / fwidth(sigDist) + 0.5, 0.0, 1.0);
 
 Font outlines and complex vector paths sometimes contain self-intersecting contours, overlapping subpaths, or winding ambiguities. These cause msdfgen to produce incorrect or artifacted distance fields.
 
-SwiftSDF embeds Skia's PathOps engine to resolve this before generation. When `simplifyPath = true` (the default), the path is run through a boolean union operation that:
+SwiftSDF embeds Skia's PathOps engine to resolve this before generation. When `simplifyPath = true` (the default), the path is run through a set of operations that:
 
 - Resolves all self-intersections
 - Merges overlapping contours
@@ -334,49 +346,6 @@ let config = SDFConfiguration(
 
 The repository includes a demo app that demonstrates the full pipeline: CoreText glyph → SwiftSDF generation → Metal texture → on-screen rendering.
 
-### Obtaining a glyph path
-
-```swift
-// GlyphUtils.swift (demo)
-import CoreText
-
-static func createPath(for character: Character, font: UIFont) -> CGPath? {
-    let attrString = NSAttributedString(string: String(character), attributes: [.font: font])
-    let line = CTLineCreateWithAttributedString(attrString)
-    guard let run = (CTLineGetGlyphRuns(line) as? [CTRun])?.first else { return nil }
-    var glyph = CGGlyph()
-    CTRunGetGlyphs(run, CFRangeMake(0, 1), &glyph)
-    return CTFontCreatePathForGlyph(font as CTFont, glyph, nil)
-}
-```
-
-### SwiftUI Metal view
-
-```swift
-// SDFMetalView.swift (demo) — full MTKView integration
-struct SDFMetalView: UIViewRepresentable {
-    let cgPath: CGPath
-    // ...generates texture via SwiftSDF, sets up render pipeline,
-    // binds MSDF texture, draws full-screen quad with triangle strip
-}
-```
-
-### Fragment shader (MSDF)
-
-```metal
-// Shaders.metal (demo)
-fragment float4 fragmentMain(VertexOut in [[stage_in]],
-                             texture2d<float> sdfTexture [[texture(0)]]) {
-    constexpr sampler s(mag_filter::linear, min_filter::linear);
-    float4 tex    = sdfTexture.sample(s, in.uv);
-    float sigDist = median(tex.r, tex.g, tex.b) - 0.5;
-    float alpha   = clamp(sigDist / fwidth(sigDist) + 0.5, 0.0, 1.0);
-    return float4(1.0, 1.0, 1.0, alpha);
-}
-```
-
-The demo renders text at arbitrary scale with crisp, anti-aliased edges at all sizes — from a single 256×256 MSDF texture.
-
 ---
 
 ## Performance
@@ -391,21 +360,17 @@ SwiftSDF runs the entire generation pipeline on the CPU via the msdfgen C++ core
 
 Generation time scales with path complexity and output resolution. A single 128×128 glyph typically completes in under a millisecond on modern Apple Silicon. A full ASCII glyph atlas at 64×64 per glyph can be generated on a background thread and uploaded to Metal textures in a single batch.
 
-### GPU Generation (Not Included)
+### GPU Generation
 
-A GPU-accelerated SDF/MSDF generation pipeline exists and runs significantly faster than the CPU path — making it suitable for real-time and runtime glyph generation. This pipeline is part of a private text rendering engine and is not included in this library.
+SwiftSDF's generation runs on the CPU. For most use cases — pre-building a glyph atlas, static icons, infrequent updates — this is more than fast enough.
 
-If your use case requires real-time SDF generation (e.g. animating vector paths or generating glyphs on demand every frame), consider:
-
-1. Pre-generating and caching at startup on a background `DispatchQueue`
-2. Maintaining a `MTLTexture` glyph atlas, updating only newly-encountered glyphs
-3. Reaching out if GPU generation becomes a priority feature for this library
+If your use case involves generating a high volume of paths where the CPU pipeline becomes a bottleneck, a GPU-accelerated generation path is a significantly faster alternative. Feel free to [open a discussion](https://github.com/ZeroOneZeroR/SwiftSDF/discussions) describing your requirements.
 
 ---
 
 ## Licensing
 
-SwiftSDF is released under the MIT License — free for personal and commercial use.
+SwiftSDF is released under the **MIT License** — free for personal and commercial use.
 
 ### Third-Party Notices
 
@@ -416,11 +381,9 @@ SwiftSDF is built on two open-source libraries:
 | [msdfgen](https://github.com/Chlumsky/msdfgen) by Viktor Chlumský | MIT |
 | [Skia PathOps](https://github.com/google/skia) by Google | BSD 3-Clause |
 
-Both MIT and BSD-3-Clause are **permissive licenses**. You may use SwiftSDF in **personal and commercial projects** freely.
+Both MIT and BSD-3-Clause are **permissive licenses**. You may use SwiftSDF in personal and commercial projects freely. There is no copyleft requirement — you are not required to open-source your own application or renderer.
 
-There is no copyleft requirement. You are not required to open-source your own application or renderer.
-
-A `NOTICES` file in the repository root contains all third-party attributions in one place.
+A `NOTICES` file in the repository root contains all third-party attributions.
 
 ---
 
@@ -428,4 +391,3 @@ A `NOTICES` file in the repository root contains all third-party attributions in
 
 - **[msdfgen](https://github.com/Chlumsky/msdfgen)** — Viktor Chlumský's excellent multi-channel signed distance field generator, the C++ core of this library's generation engine.
 - **[Skia](https://github.com/google/skia)** — Google's 2D graphics library, specifically the PathOps module used for robust path simplification.
-
