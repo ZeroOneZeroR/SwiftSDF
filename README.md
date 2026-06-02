@@ -1,6 +1,6 @@
 # SwiftSDF
 
-**A Swift package for high-quality Signed Distance Field (SDF) and Multi-channel Signed Distance Field (MSDF/MTSDF) generation from `CGPath` on Apple platforms.**
+**A Swift package for high-quality Signed Distance Field (SDF) and Multi-channel Signed Distance Field (MSDF/MTSDF) generation from `CGPath`, enabling crisp text and vector graphics rendering in Metal on Apple platforms.**
 
 Built on top of [msdfgen](https://github.com/Chlumsky/msdfgen) and [Skia PathOps](https://skia.org/docs/dev/present/pathops/), SwiftSDF provides a clean, idiomatic Swift API that takes any `CGPath` and produces a packed, Metal-ready texture buffer.
 
